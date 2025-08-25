@@ -1,147 +1,107 @@
-'use client'
+"use client";
 
-import React from "react";
-import {
-  Wheat,
-  LogOut,
-  House,
-  ChartColumn,
-  TrendingUp,
-  DollarSign,
-  Users,
-  Settings,
-  Key,
-  Wifi,
-} from "lucide-react";
-import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import React, { useEffect, useState } from "react";
+import { Key, Wifi } from "lucide-react";
+import Header from "@/components/Header";
+import Sidebar from "@/components/Sidebar";
+import Card from "@/components/Card";
+import Chart from "@/components/Chart";
+import Table from "@/components/Table";
+
+export type CommoditiesData = {
+  date: string;
+  cafe: number | null;
+  milho: number | null;
+  usd: number | null;
+};
 
 export default function Home() {
+  const [commodities, setCommodities] = useState<CommoditiesData[]>([]);
+  const [period, setPeriod] = useState<number>(3);
+  const [filteredData, setFilteredData] = useState<CommoditiesData[]>([]);
+  const [usd, setUSD] = useState<{ date: string; value: number }[]>([]);
 
-  const chartData = [
-    { date: '24/04/2025', soja: 12, milho: 5.25, usd: 4 },
-    { date: '25/04/2025', soja: 10, milho: 4.75, usd: 4 },
-    { date: '26/04/2025', soja: 14, milho: 5.09, usd: 4 },
-    { date: '27/04/2025', soja: 16, milho: 5.28, usd: 4 },
-    { date: '28/04/2025', soja: 15, milho: 4.94, usd: 4 },
-    { date: '29/04/2025', soja: 14, milho: 4.04, usd: 4 },
-    { date: '30/04/2025', soja: 15, milho: 4.43, usd: 4 }
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch("/api/commodities");
+        const data = await res.json();
+        console.log("Res Data:", data);
+
+        if (data.error) {
+          console.error("Erro API:", data.error);
+          return;
+        }
+
+        const { commodities, usd } = data;
+
+        setCommodities(commodities);
+        setUSD(usd);
+      } catch (err) {
+        console.error("Erro ao buscar dados:", err);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    if (!commodities || commodities.length === 0) return;
+
+    const parseDate = (dateStr: string) => {
+      const [day, month, year] = dateStr.split("/").map(Number);
+      return new Date(year, month, day);
+    };
+
+    const lastDataDate = parseDate(commodities[0].date);
+
+    const cutoffDate = new Date(lastDataDate);
+    cutoffDate.setMonth(cutoffDate.getMonth() - period + 1);
+
+    const filtered = commodities
+      .map((commodity) => {
+        const usdEntry = usd.find((u) => u.date === commodity.date);
+        return { ...commodity, usd: usdEntry ? usdEntry.value : null };
+      })
+      .filter((row) => parseDate(row.date) >= cutoffDate);
+
+    setFilteredData(filtered);
+  }, [commodities, period]);
+
+  function calculateVariation(
+    current: number | null,
+    previous: number | null
+  ): number | null {
+    if (current === null || previous === null) return null;
+
+    return ((current - previous) / previous) * 100;
+  }
+
+  const cafeVariation = calculateVariation(
+    filteredData[0]?.cafe,
+    filteredData[1]?.cafe ?? null
+  );
+  const milhoVariation = calculateVariation(
+    filteredData[0]?.milho,
+    filteredData[1]?.milho ?? null
+  );
+  const usdVariation = calculateVariation(
+    filteredData[0]?.usd,
+    filteredData[1]?.usd ?? null
+  );
+
+  const defaultCommodity = { date: "-", cafe: null, milho: null, usd: null };
+
+  const firstCommodity = (commodities ?? [])[0] ?? defaultCommodity;
+  // const firstUSD = (filteredData ?? [])[0] ?? defaultCommodity;
+
   return (
-    <div className="min-h-screen bg-white">
-      {/* HEADER */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
-                <Wheat className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-lg font-semibold text-gray-900">
-                  AgroData
-                </h1>
-                <p className="text-sm text-gray-500">Dashboard Agrícola</p>
-              </div>
-            </div>
-            <div className="absolute top-0 bottom-0 h-screen left-65 w-px bg-gray-300 mx-4"></div>
-            <div className="ml-25">
-              <h2 className="text-xl font-semibold text-gray-900">
-                Dashboard Agrícola
-              </h2>
-              <p className="text-sm text-gray-500">
-                Monitoramento de Commodities em Tempo Real
-              </p>
-            </div>
-          </div>
-          <button className="flex items-center border border-gray-300 rounded px-4 py-2 text-gray-800 hover:text-gray-700 text-sm font-medium cursor-pointer">
-            <LogOut className="w-4 y-4 text-black mr-3" />
-            Logout
-          </button>
-        </div>
-      </div>
+    <div className="min-h-screen flex flex-col bg-white">
+      <Header />
 
-      <div className="flex h-screen">
-        {/* SIDEBAR */}
-        <div className="w-65 bg-gray-100 border-gray-200">
-          <div className="p-4">
-            <div className="mb-6">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                NAVEGAÇÃO PRINCIPAL
-              </h3>
-              <nav className="space-y-1">
-                <a
-                  href="#"
-                  className="bg-gray-200 text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md"
-                >
-                  <House className="w-4 y-4 mr-3" />
-                  Dashboard
-                </a>
-                <a
-                  href="#"
-                  className="text-gray-700 hover:bg-gray-200 group flex items-center px-2 py-2 text-sm font-medium rounded-md"
-                >
-                  <Wheat className="w-4 y-4 mr-3" />
-                  Commodities
-                </a>
-                <a
-                  href="#"
-                  className="text-gray-700 hover:bg-gray-200 group flex items-center px-2 py-2 text-sm font-medium rounded-md"
-                >
-                  <TrendingUp className="w-4 y-4 mr-3" />
-                  Análises
-                </a>
-                <a
-                  href="#"
-                  className="text-gray-700 hover:bg-gray-200 group flex items-center px-2 py-2 text-sm font-medium rounded-md"
-                >
-                  <ChartColumn className="w-4 y-4 mr-3" />
-                  Relatórios
-                </a>
-                <a
-                  href="#"
-                  className="text-gray-700 hover:bg-gray-200 group flex items-center px-2 py-2 text-sm font-medium rounded-md"
-                >
-                  <DollarSign className="w-4 y-4 mr-3" />
-                  Câmbio
-                </a>
-              </nav>
-            </div>
-
-            <div>
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                GERENCIAMENTO
-              </h3>
-              <nav className="space-y-1">
-                <a
-                  href="#"
-                  className="text-gray-700 hover:bg-gray-200 group flex items-center px-2 py-2 text-sm font-medium rounded-md"
-                >
-                  <Users className="w-4 y-4 mr-3" />
-                  Usuários
-                </a>
-                <a
-                  href="#"
-                  className="text-gray-700 hover:bg-gray-200 group flex items-center px-2 py-2 text-sm font-medium rounded-md"
-                >
-                  <Settings className="w-4 y-4 mr-3" />
-                  Configurações
-                </a>
-              </nav>
-              {/* BLOCO DE USUÁRIO */}
-              <div className="absolute left-0 w-65 h-px bg-gray-300 mt-50">
-                <div className="flex items-center space-x-3 p-4">
-                  <img src="/profile-icon.png" className="w-10 h-10" />
-                  <div>
-                    <h1 className="text-lg text-gray-900">Agro User</h1>
-                    <p className="text-sm text-gray-500">admin@agrodata.com</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex-1 p-6">
+      <div className="flex flex-1">
+        <Sidebar />
+        <main className="flex-1 p-6 bg-white">
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-7 flex items-center justify-between">
             <div className="text-blue-600 mr-3 flex items-center">
               <Key className="w-4 y-4 mr-3" />
@@ -167,112 +127,41 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-            {/* Soja Card */}
-            <div className="bg-green-50 rounded-lg border border-green-300 p-6">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-md font-medium text-black font-semibold">
-                  Soja
-                </h3>
-                <Wheat className="w-8 h-8 text-green-500" />
-              </div>
-              <div className="flex items-baseline space-x-2">
-                <span className="text-2xl font-bold text-black">$21.77</span>
-                <span className="text-sm text-gray-900">/ETF</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="text-xs text-gray-600 mt-1">2025-05-24</div>
-                <div className="flex items-center mt-2 bg-red-200 rounded-xl px-3">
-                  <span className="text-sm text-red-700">-1.53%</span>
-                </div>
-              </div>
-            </div>
-            {/* Milho Card */}
-            <div className="bg-yellow-50 rounded-lg border border-yellow-300 p-6">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-md font-medium text-black font-semibold">
-                  Soja
-                </h3>
-                <TrendingUp className="w-8 h-8 text-yellow-500" />
-              </div>
-              <div className="flex items-baseline space-x-2">
-                <span className="text-2xl font-bold text-black">$18.24</span>
-                <span className="text-sm text-gray-900">/ETF</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="text-xs text-gray-600 mt-1">2025-05-24</div>
-                <div className="flex items-center mt-2 bg-red-200 rounded-xl px-3">
-                  <span className="text-sm text-red-700">-0.76%</span>
-                </div>
-              </div>
-            </div>
-            {/* USD Card */}
-            <div className="bg-blue-50 rounded-lg border border-blue-300 p-6">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-md font-medium text-black font-semibold">
-                  USD/BRL
-                </h3>
-                <DollarSign className="w-8 h-8 text-blue-500" />
-              </div>
-              <div className="flex items-baseline space-x-2">
-                <span className="text-2xl font-bold text-black">R$5.65</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="text-xs text-gray-600 mt-1">29/05/2025</div>
-                <div className="flex items-center mt-2 bg-green-200 rounded-xl px-3">
-                  <span className="text-sm text-green-700">+0.55%</span>
-                </div>
-              </div>
-            </div>
+            <Card
+              title="Cafe"
+              value={firstCommodity.cafe}
+              date={firstCommodity.date}
+              variation={cafeVariation}
+            />
+
+            <Card
+              title="Milho"
+              value={firstCommodity.milho}
+              date={firstCommodity.date}
+              variation={milhoVariation}
+            />
+
+            <Card
+              title="USD/BRL"
+              value={firstCommodity.usd}
+              date={firstCommodity.date}
+              variation={usdVariation}
+            />
           </div>
 
-          {/* Chart Section */}
-          <div className="rounded-lg border border-gray-200 p-6 mt-8">
-            <div className="flex items-center mb-4">
-              <TrendingUp className="w-5 h-5 text-green-600 mr-2" />
-              <h3 className="text-lg font-semibold text-gray-900">Evolução dos Preços</h3>
-            </div>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray=" 3 3" />
-                  <XAxis
-                    dataKey="date"
-                    tick={{ fontSize: 12, fill: '#6B7280'}}
-                  />
-                  <YAxis
-                    tick={{ fontSize: 12, fill: '#6B7280'}}
-                  />
-                  <Tooltip />
-                  <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey="soja"
-                    name="Soja"
-                    stroke="#10B981"
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="milho"
-                    name="Milho"
-                    stroke="#F59E0B"
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="usd" 
-                    name="USD/BRL"
-                    stroke="#3B82F6" 
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
+          <Chart
+            data={filteredData.length ? filteredData : [defaultCommodity]}
+          />
+
+          <Table data={filteredData} period={period} setPeriod={setPeriod} />
+
+          <footer className="border-t border-gray-300 mt-15 text-center">
+            <h3 className="text-xs text-gray-600 mt-5">
+              © 2025 AgroData - Dashboard Agrícola - Dados fornecidos por APIs
+              públicas
+            </h3>
+          </footer>
+        </main>
       </div>
     </div>
   );
