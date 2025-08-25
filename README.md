@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AgroData - Dashboard Agrícola
 
-## Getting Started
+Um dashboard para visualizar dados de commodities agrícolas (Café e Milho) e a cotação USD/BRL, com gráficos, tabela e cards de resumo.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Tecnologias Utilizadas
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Front-end:** React + Next.js (App Router)
+- **Back-end:** API interna usando Next.js API Routes
+- **Visualização de dados:** Recharts
+- **Ícones:** Lucide React
+- **Estilos:** Tailwind CSS
+- **Variáveis de ambiente:** `.env` para armazenar a chave da API
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Funcionalidades
 
-## Learn More
+- Exibição de dados de **Café**, **Milho** e **USD/BRL**
+- Cards com valores atuais e variação em %
+- Gráfico com histórico dos últimos meses (filtrável por período)
+- Tabela com dados detalhados e seleção de período
+- Atualização automática dos dados da API
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Setup Local
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Clone o projeto:  
 
-## Deploy on Vercel
+   ```bash
+   git clone <URL_DO_REPOSITORIO>
+   cd <PASTA_DO_PROJETO>
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+2. Instale as dependências
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+   ```bash
+   npm install
+
+3. Crie o arquivo ".env" na raiz do projeto e adicione sua chave da Alpha Vantage:
+
+   ```bash
+   ALPHA_VANTAGE_API_KEY=SuaChaveAqui
+
+4. Rode a aplicação em modo de desenvolvimento:
+
+   ```bash
+   npm run dev
+
+5. Abra no navegador
+
+   https://localhost:3000
+   
+---
+
+## Implicações
+Durante o desenvolvimento, tive dificuldade para testar algumas funcionalidades devido à limitação da API da Alpha Vantage. A versão gratuita permite apenas 25 requisições por dia, o que restringiu a execução de atualizações automáticas e testes frequentes.
+Para contornar isso, foi necessário moderar o número de chamadas à API ou trabalhar com dados mock para testar o front-end sem ultrapassar o limite.
+
+---
+
+## Deploy
+O projeto está publicado e disponível online em:
+https://agro-data-kappa.vercel.app
